@@ -1,9 +1,11 @@
+use std::error::Error;
 use std::fs;
 use std::fs::File;
 use std::io;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
 
+#[derive(Debug)]
 pub struct BatteryInfo {
     charging: bool,
     percentage: f32,
@@ -42,7 +44,7 @@ pub fn info_directories() -> io::Result<Option<InfoDirectories>> {
     }
 }
 
-pub fn battery_info(loc: InfoDirectories) -> io::Result<BatteryInfo> {
+pub fn battery_info(loc: InfoDirectories) -> Result<BatteryInfo, Box<dyn Error>> {
     let charge_now_path = loc.battery.join(Path::new("charge_now"));
     let charge_full_path = loc.battery.join(Path::new("charge_full"));
     let percentage_path = loc.battery.join(Path::new("capacity"));
@@ -58,12 +60,34 @@ pub fn battery_info(loc: InfoDirectories) -> io::Result<BatteryInfo> {
     File::open(percentage_path)?.read_to_string(&mut percentage)?;
     File::open(charging_path)?.read_to_string(&mut charging)?;
 
-    let is_charging = charging == String::from("1");
-
     Ok(BatteryInfo {
-        charge_now: charge_now.parse().unwrap(),
-        charge_full: charge_full.parse().unwrap(),
-        percentage: percentage.parse().unwrap(),
-        charging: is_charging,
+        charge_now: charge_now.trim().parse()?,
+        charge_full: charge_full.trim().parse()?,
+        percentage: percentage.trim().parse()?,
+        charging: charging == String::from("1"),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_info_dir() -> io::Result<()> {
+        let dirs = info_directories()?;
+        assert_eq!(dirs.is_some(), true);
+        if let Some(dirs) = dirs {
+            assert_eq!(dirs.battery.is_dir(), true);
+            assert_eq!(dirs.ac.is_dir(), true);
+        }
+        Ok(())
+    }
+
+    #[test]
+    fn test_info() -> Result<(), Box<dyn Error>> {
+        let dirs = info_directories()?.unwrap();
+        let info = battery_info(dirs)?;
+        println!("{:?}", info);
+        Ok(())
+    }
 }
