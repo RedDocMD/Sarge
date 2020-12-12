@@ -7,10 +7,10 @@ use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
 pub struct BatteryInfo {
-    charging: bool,
-    percentage: f32,
-    charge_now: i32,
-    charge_full: i32,
+    pub charging: bool,
+    pub percentage: f32,
+    pub charge_now: i32,
+    pub charge_full: i32,
 }
 
 pub struct InfoDirectories {
