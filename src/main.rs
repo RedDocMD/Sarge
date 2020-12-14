@@ -4,6 +4,7 @@ use sarge::config::*;
 use std::env;
 use std::path::PathBuf;
 use std::process;
+use std::thread;
 use syslog::{BasicLogger, Facility, Formatter3164};
 
 fn main() {
@@ -38,12 +39,12 @@ fn main() {
         },
     };
 
-    let mut config: Config;
+    let mut config = Config::default();
     let mut conf_set = false;
     if let Some(xdg_config_home) = env::var_os("XDG_CONFIG_HOME") {
         let mut path = PathBuf::from(xdg_config_home);
         path.push("sarge");
-        path.push("sargee.yml");
+        path.push("sarge.yml");
         if path.exists() {
             if let Ok(conf) = Config::from_file(&path) {
                 config = conf;
@@ -87,7 +88,40 @@ fn main() {
         }
     }
     if !conf_set {
-        config = Config::default();
         warn!("No explicit config file found; falling back to default config");
+    }
+
+    let mut old_info = match BatteryInfo::from(&info_dir) {
+        Ok(e) => e,
+        Err(e) => {
+            error!("{}", e);
+            process::exit(1);
+        }
+    };
+    thread::sleep(config.intv());
+    let mut new_info = match BatteryInfo::from(&info_dir) {
+        Ok(e) => e,
+        Err(e) => {
+            error!("{}", e);
+            process::exit(1);
+        }
+    };
+
+    loop {
+        let msgs = config.messages(&old_info, &new_info);
+        if msgs.len() != 0 {
+            for msg in &msgs {
+                println!("{}", msg);
+            }
+        }
+        thread::sleep(config.intv());
+        old_info = new_info;
+        new_info = match BatteryInfo::from(&info_dir) {
+            Ok(e) => e,
+            Err(e) => {
+                error!("{}", e);
+                process::exit(1);
+            }
+        };
     }
 }

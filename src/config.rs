@@ -4,6 +4,7 @@ use std::error::Error;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
+use std::time::Duration;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 enum TriggerType {
@@ -109,6 +110,10 @@ impl Config {
             };
         }
         msgs
+    }
+
+    pub fn intv(&self) -> Duration {
+        Duration::from_millis(self.update_interval as u64)
     }
 }
 

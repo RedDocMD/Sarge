@@ -47,7 +47,7 @@ impl InfoDirectories {
 }
 
 impl BatteryInfo {
-    pub fn from(loc: InfoDirectories) -> Result<Self, Box<dyn Error>> {
+    pub fn from(loc: &InfoDirectories) -> Result<Self, Box<dyn Error>> {
         let charge_now_path = loc.battery.join(Path::new("charge_now"));
         let charge_full_path = loc.battery.join(Path::new("charge_full"));
         let percentage_path = loc.battery.join(Path::new("capacity"));
@@ -67,7 +67,7 @@ impl BatteryInfo {
             charge_now: charge_now.trim().parse()?,
             charge_full: charge_full.trim().parse()?,
             percentage: percentage.trim().parse()?,
-            charging: charging == String::from("1"),
+            charging: charging.trim() == String::from("1"),
         })
     }
 }
@@ -90,7 +90,7 @@ mod tests {
     #[test]
     fn test_info() -> Result<(), Box<dyn Error>> {
         let dirs = InfoDirectories::read()?.unwrap();
-        let info = BatteryInfo::from(dirs)?;
+        let info = BatteryInfo::from(&dirs)?;
         println!("{:?}", info);
         Ok(())
     }
