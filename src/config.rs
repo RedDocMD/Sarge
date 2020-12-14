@@ -1,3 +1,4 @@
+use super::battery::*;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::fs::File;
@@ -64,6 +65,46 @@ impl Config {
             };
         }
         Ok(config)
+    }
+
+    pub fn messages(&self, old: &BatteryInfo, new: &BatteryInfo) -> Vec<String> {
+        let mut msgs = Vec::new();
+        for trigger in &self.triggers {
+            match trigger.when {
+                TriggerType::Above => {
+                    if old.percentage <= trigger.percentage.unwrap()
+                        && new.percentage > trigger.percentage.unwrap()
+                    {
+                        msgs.push(trigger.message.clone());
+                    }
+                }
+                TriggerType::Below => {
+                    if old.percentage >= trigger.percentage.unwrap()
+                        && new.percentage < trigger.percentage.unwrap()
+                    {
+                        msgs.push(trigger.message.clone());
+                    }
+                }
+                TriggerType::Equal => {
+                    if old.percentage != trigger.percentage.unwrap()
+                        && new.percentage == trigger.percentage.unwrap()
+                    {
+                        msgs.push(trigger.message.clone());
+                    }
+                }
+                TriggerType::Charging => {
+                    if !old.charging && new.charging {
+                        msgs.push(trigger.message.clone());
+                    }
+                }
+                TriggerType::Discharging => {
+                    if old.charging && !new.charging {
+                        msgs.push(trigger.message.clone());
+                    }
+                }
+            };
+        }
+        msgs
     }
 }
 
