@@ -102,21 +102,19 @@ fn get_config() -> (Config, Option<PathBuf>) {
         path.push("sarge");
         path.push("sarge.yml");
         if path.exists() {
-            if let Ok(conf) = Config::from_file(&path) {
-                return (conf, Some(path));
-            } else {
-                warn!("error in config file: {}", path.display());
-            }
+            match Config::from_file(&path) {
+                Ok(c) => return (c, Some(path)),
+                Err(e) => warn!("error in {}: {}", path.display(), e),
+            };
         } else {
             path.pop();
             path.pop();
             path.push("sarge.yml");
             if path.exists() {
-                if let Ok(conf) = Config::from_file(&path) {
-                    return (conf, Some(path));
-                } else {
-                    warn!("error in config file: {}", path.display());
-                }
+                match Config::from_file(&path) {
+                    Ok(c) => return (c, Some(path)),
+                    Err(e) => warn!("error in {}: {}", path.display(), e),
+                };
             }
         }
     }
@@ -126,22 +124,20 @@ fn get_config() -> (Config, Option<PathBuf>) {
         path.push("sarge");
         path.push("sarge.yml");
         if path.exists() {
-            if let Ok(conf) = Config::from_file(&path) {
-                return (conf, Some(path));
-            } else {
-                warn!("error in config file: {}", path.display());
-            }
+            match Config::from_file(&path) {
+                Ok(c) => return (c, Some(path)),
+                Err(e) => warn!("error in {}: {}", path.display(), e),
+            };
         } else {
             path.pop();
             path.pop();
             path.pop();
             path.push(".sarge.yml");
             if path.exists() {
-                if let Ok(conf) = Config::from_file(&path) {
-                    return (conf, Some(path));
-                } else {
-                    warn!("error in config file: {}", path.display());
-                }
+                match Config::from_file(&path) {
+                    Ok(c) => return (c, Some(path)),
+                    Err(e) => warn!("error in {}: {}", path.display(), e),
+                };
             }
         }
     }
