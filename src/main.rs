@@ -1,4 +1,5 @@
 use log::{error, warn, LevelFilter};
+use notify_rust::Notification;
 use sarge::battery::*;
 use sarge::config::*;
 use std::env;
@@ -111,7 +112,10 @@ fn main() {
         let msgs = config.messages(&old_info, &new_info);
         if msgs.len() != 0 {
             for msg in &msgs {
-                println!("{}", msg);
+                match Notification::new().summary("sarge").body(msg).show() {
+                    Err(e) => error!("{}", e),
+                    _ => {}
+                };
             }
         }
         thread::sleep(config.intv());
