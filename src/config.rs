@@ -115,6 +115,12 @@ impl Config {
     pub fn intv(&self) -> Duration {
         Duration::from_millis(self.update_interval as u64)
     }
+
+    pub fn update(&mut self, new: &mut Self) {
+        self.update_interval = new.update_interval;
+        self.triggers.clear();
+        self.triggers.append(&mut new.triggers);
+    }
 }
 
 #[cfg(test)]

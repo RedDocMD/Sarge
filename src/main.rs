@@ -1,11 +1,15 @@
 use log::{error, warn, LevelFilter};
+use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
 use notify_rust::Notification;
 use sarge::battery::*;
 use sarge::config::*;
 use std::env;
 use std::path::PathBuf;
 use std::process;
+use std::sync::mpsc::channel;
+use std::sync::{Arc, Mutex};
 use std::thread;
+use std::time::Duration;
 use syslog::{BasicLogger, Facility, Formatter3164};
 
 fn main() {
@@ -40,13 +44,42 @@ fn main() {
         },
     };
 
-    let (config, config_path) = get_config();
+    let (config_raw, config_path) = get_config();
+    let config_rc = Arc::from(Mutex::new(config_raw));
+
+    if let Some(config_path) = config_path {
+        let (tx, rx) = channel();
+        let mut watcher = watcher(tx, Duration::from_secs(5)).unwrap();
+        watcher
+            .watch(config_path, RecursiveMode::NonRecursive)
+            .unwrap();
+
+        let config_rc = Arc::clone(&config_rc);
+        thread::spawn(move || loop {
+            let event = rx.recv().unwrap();
+            match event {
+                DebouncedEvent::Write(path) => {
+                    if let Ok(conf) = &mut Config::from_file(&path) {
+                        let mut config = config_rc.lock().unwrap();
+                        println!("Got hands on config: {}", path.display());
+                        config.update(conf);
+                    }
+                }
+                _ => {}
+            };
+        });
+    } else {
+        warn!("no config file found; choosing to default config");
+    }
 
     let mut old_info = get_info(&info_dir);
+    let config = config_rc.lock().unwrap();
     thread::sleep(config.intv());
+    drop(config);
     let mut new_info = get_info(&info_dir);
 
     loop {
+        let config = config_rc.lock().unwrap();
         let msgs = config.messages(&old_info, &new_info);
         if msgs.len() != 0 {
             for msg in &msgs {
@@ -57,6 +90,7 @@ fn main() {
             }
         }
         thread::sleep(config.intv());
+        drop(config);
         old_info = new_info;
         new_info = get_info(&info_dir);
     }
@@ -70,6 +104,8 @@ fn get_config() -> (Config, Option<PathBuf>) {
         if path.exists() {
             if let Ok(conf) = Config::from_file(&path) {
                 return (conf, Some(path));
+            } else {
+                warn!("error in config file: {}", path.display());
             }
         } else {
             path.pop();
@@ -78,6 +114,8 @@ fn get_config() -> (Config, Option<PathBuf>) {
             if path.exists() {
                 if let Ok(conf) = Config::from_file(&path) {
                     return (conf, Some(path));
+                } else {
+                    warn!("error in config file: {}", path.display());
                 }
             }
         }
@@ -90,6 +128,8 @@ fn get_config() -> (Config, Option<PathBuf>) {
         if path.exists() {
             if let Ok(conf) = Config::from_file(&path) {
                 return (conf, Some(path));
+            } else {
+                warn!("error in config file: {}", path.display());
             }
         } else {
             path.pop();
@@ -99,6 +139,8 @@ fn get_config() -> (Config, Option<PathBuf>) {
             if path.exists() {
                 if let Ok(conf) = Config::from_file(&path) {
                     return (conf, Some(path));
+                } else {
+                    warn!("error in config file: {}", path.display());
                 }
             }
         }
