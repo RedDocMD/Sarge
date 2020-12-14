@@ -10,3 +10,6 @@ edition = "2018"
 yaml-rust = "0.4.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.8"
+log = "0.4"
+syslog = "5.0.0"
+notify-rust = "4.0.0"
