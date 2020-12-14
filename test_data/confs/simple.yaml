@@ -10,3 +10,5 @@ triggers:
   - percentage: ~
     when: Discharging
     message: Battery discharging
+
+update_interval: 500

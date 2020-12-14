@@ -2,3 +2,5 @@ triggers:
   - percentage: 50
     when: Charging
     message: Battery charging
+    
+update_interval: 500

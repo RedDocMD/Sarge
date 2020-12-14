@@ -23,6 +23,7 @@ struct Trigger {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Config {
+    update_interval: i32, // In milisecond
     triggers: Vec<Trigger>,
 }
 
@@ -50,7 +51,10 @@ impl Config {
                 message: String::from("Battery discharging"),
             },
         ];
-        Self { triggers }
+        Self {
+            triggers,
+            update_interval: 1000,
+        }
     }
 
     pub fn from_file(path: &Path) -> Result<Self, Box<dyn Error>> {
@@ -138,6 +142,7 @@ mod test {
         ];
 
         assert_eq!(expected_triggers, config.triggers);
+        assert_eq!(config.update_interval, 500);
         Ok(())
     }
 
