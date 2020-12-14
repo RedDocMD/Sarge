@@ -40,73 +40,11 @@ fn main() {
         },
     };
 
-    let mut config = Config::default();
-    let mut conf_set = false;
-    if let Some(xdg_config_home) = env::var_os("XDG_CONFIG_HOME") {
-        let mut path = PathBuf::from(xdg_config_home);
-        path.push("sarge");
-        path.push("sarge.yml");
-        if path.exists() {
-            if let Ok(conf) = Config::from_file(&path) {
-                config = conf;
-                conf_set = true;
-            }
-        } else {
-            path.pop();
-            path.pop();
-            path.push("sarge.yml");
-            if path.exists() {
-                if let Ok(conf) = Config::from_file(&path) {
-                    config = conf;
-                    conf_set = true;
-                }
-            }
-        }
-    }
-    if !conf_set {
-        if let Some(home) = env::var_os("HOME") {
-            let mut path = PathBuf::from(home);
-            path.push(".config");
-            path.push("sarge");
-            path.push("sarge.yml");
-            if path.exists() {
-                if let Ok(conf) = Config::from_file(&path) {
-                    config = conf;
-                    conf_set = true;
-                }
-            } else {
-                path.pop();
-                path.pop();
-                path.pop();
-                path.push(".sarge.yml");
-                if path.exists() {
-                    if let Ok(conf) = Config::from_file(&path) {
-                        config = conf;
-                        conf_set = true;
-                    }
-                }
-            }
-        }
-    }
-    if !conf_set {
-        warn!("No explicit config file found; falling back to default config");
-    }
+    let (config, config_path) = get_config();
 
-    let mut old_info = match BatteryInfo::from(&info_dir) {
-        Ok(e) => e,
-        Err(e) => {
-            error!("{}", e);
-            process::exit(1);
-        }
-    };
+    let mut old_info = get_info(&info_dir);
     thread::sleep(config.intv());
-    let mut new_info = match BatteryInfo::from(&info_dir) {
-        Ok(e) => e,
-        Err(e) => {
-            error!("{}", e);
-            process::exit(1);
-        }
-    };
+    let mut new_info = get_info(&info_dir);
 
     loop {
         let msgs = config.messages(&old_info, &new_info);
@@ -120,12 +58,60 @@ fn main() {
         }
         thread::sleep(config.intv());
         old_info = new_info;
-        new_info = match BatteryInfo::from(&info_dir) {
-            Ok(e) => e,
-            Err(e) => {
-                error!("{}", e);
-                process::exit(1);
+        new_info = get_info(&info_dir);
+    }
+}
+
+fn get_config() -> (Config, Option<PathBuf>) {
+    if let Some(xdg_config_home) = env::var_os("XDG_CONFIG_HOME") {
+        let mut path = PathBuf::from(xdg_config_home);
+        path.push("sarge");
+        path.push("sarge.yml");
+        if path.exists() {
+            if let Ok(conf) = Config::from_file(&path) {
+                return (conf, Some(path));
             }
-        };
+        } else {
+            path.pop();
+            path.pop();
+            path.push("sarge.yml");
+            if path.exists() {
+                if let Ok(conf) = Config::from_file(&path) {
+                    return (conf, Some(path));
+                }
+            }
+        }
+    }
+    if let Some(home) = env::var_os("HOME") {
+        let mut path = PathBuf::from(home);
+        path.push(".config");
+        path.push("sarge");
+        path.push("sarge.yml");
+        if path.exists() {
+            if let Ok(conf) = Config::from_file(&path) {
+                return (conf, Some(path));
+            }
+        } else {
+            path.pop();
+            path.pop();
+            path.pop();
+            path.push(".sarge.yml");
+            if path.exists() {
+                if let Ok(conf) = Config::from_file(&path) {
+                    return (conf, Some(path));
+                }
+            }
+        }
+    }
+    (Config::default(), None)
+}
+
+fn get_info(info_dir: &InfoDirectories) -> BatteryInfo {
+    match BatteryInfo::from(info_dir) {
+        Ok(s) => s,
+        Err(e) => {
+            error!("{}", e);
+            process::exit(1);
+        }
     }
 }
