@@ -1,6 +1,5 @@
 use serde::{Deserialize, Serialize};
 use std::error::Error;
-use std::fmt;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
@@ -57,7 +56,13 @@ impl Config {
         let mut file = File::open(path)?;
         let mut content = String::new();
         file.read_to_string(&mut content)?;
-        let config: Config = serde_yaml::from_str(&content)?;
+        let mut config: Config = serde_yaml::from_str(&content)?;
+        for trigger in &mut config.triggers {
+            match trigger.when {
+                TriggerType::Charging | TriggerType::Discharging => trigger.percentage = None,
+                _ => {}
+            };
+        }
         Ok(config)
     }
 }
@@ -65,7 +70,60 @@ impl Config {
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::path::PathBuf;
 
     #[test]
-    fn simple_conf() {}
+    fn simple_conf() -> Result<(), Box<dyn Error>> {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("test_data/confs/simple.yaml");
+        let config = Config::from_file(&path)?;
+
+        let expected_triggers = vec![
+            Trigger {
+                percentage: Some(20),
+                when: TriggerType::Below,
+                message: String::from("Battery low"),
+            },
+            Trigger {
+                percentage: Some(100),
+                when: TriggerType::Equal,
+                message: String::from("Fully charged"),
+            },
+            Trigger {
+                percentage: None,
+                when: TriggerType::Discharging,
+                message: String::from("Battery discharging"),
+            },
+        ];
+
+        assert_eq!(expected_triggers, config.triggers);
+        Ok(())
+    }
+
+    #[test]
+    fn auto_none_conf() -> Result<(), Box<dyn Error>> {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("test_data/confs/auto_none.yaml");
+        let config = Config::from_file(&path)?;
+
+        let expected_triggers = vec![Trigger {
+            percentage: None,
+            when: TriggerType::Charging,
+            message: String::from("Battery charging"),
+        }];
+
+        assert_eq!(expected_triggers, config.triggers);
+        Ok(())
+    }
+
+    #[test]
+    fn garbage_value_conf() -> Result<(), Box<dyn Error>> {
+        let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        path.push("test_data/confs/garbage_value.yaml");
+        assert!(
+            Config::from_file(&path).is_err(),
+            "shouldn't accept wrong key for when"
+        );
+        Ok(())
+    }
 }

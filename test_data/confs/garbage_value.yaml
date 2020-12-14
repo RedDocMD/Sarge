@@ -1,0 +1,4 @@
+triggers:
+  - percentage: 50
+    when: Hellya
+    message: Battery charging

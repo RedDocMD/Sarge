@@ -1,0 +1,12 @@
+triggers:
+  - percentage: 20
+    when: Below
+    message: Battery low
+
+  - percentage: 100
+    when: Equal
+    message: Fully charged
+
+  - percentage: ~
+    when: Discharging
+    message: Battery discharging
