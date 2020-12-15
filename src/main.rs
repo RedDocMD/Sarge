@@ -1,5 +1,5 @@
 use log::{error, warn, LevelFilter};
-use notify::{watcher, DebouncedEvent, RecursiveMode, Watcher};
+use notify::{DebouncedEvent, RecommendedWatcher, RecursiveMode, Watcher};
 use notify_rust::Notification;
 use sarge::battery::*;
 use sarge::config::*;
@@ -49,23 +49,25 @@ fn main() {
 
     if let Some(config_path) = config_path {
         let (tx, rx) = channel();
-        let mut watcher = watcher(tx, Duration::from_secs(5)).unwrap();
+        let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(5)).unwrap();
         watcher
-            .watch(config_path, RecursiveMode::NonRecursive)
+            .watch(config_path, RecursiveMode::Recursive)
             .unwrap();
 
         let config_rc = Arc::clone(&config_rc);
         thread::spawn(move || loop {
-            let event = rx.recv().unwrap();
-            match event {
-                DebouncedEvent::Write(path) => {
-                    if let Ok(conf) = &mut Config::from_file(&path) {
-                        let mut config = config_rc.lock().unwrap();
-                        println!("Got hands on config: {}", path.display());
-                        config.update(conf);
+            match rx.recv() {
+                Ok(event) => match event {
+                    DebouncedEvent::Write(path) => {
+                        if let Ok(conf) = &mut Config::from_file(&path) {
+                            let mut config = config_rc.lock().unwrap();
+                            println!("Got hands on config: {}", path.display());
+                            config.update(conf);
+                        }
                     }
-                }
-                _ => {}
+                    _ => {}
+                },
+                Err(e) => println!("{}", e),
             };
         });
     } else {
