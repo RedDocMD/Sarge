@@ -16,7 +16,7 @@ Sarge looks in the following files, in order, for its config:
 3. `$HOME/.config/sarge/sarge.yml`
 4. `$HOME/.sarge.yml`
 
-If a config file is not found, Sarge uses its own default config.
+If a config file is not found, Sarge uses its own default config. The default config is provided [here](https://github.com/RedDocMD/Sarge/blob/master/sarge.yml).
 
 ### File format
 The config file is to be written in YAML. The keys are as follows:
