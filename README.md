@@ -31,7 +31,7 @@ The config file is to be written in YAML. The keys are as follows:
 		* `Charging` - when the AC adapter is plugged in. `percentage` key is ignored
 		* `Discharging` - when the AC adapter is unplugged. `percentage` key is ignored
 
-Sarge supports `hot-reloading` of the config file, which means that it watches for changes in its config file.
+Sarge supports *hot-reloading* of the config file, which means that it watches for changes in its config file.
 
 ## Requirements
 Sarge uses D-Bus notifications to send its notifications. Desktop environments typically have this out of the box. If you use a discrete window-manager, then you might need to install a notification serer. I personally use [Dunst](https://github.com/dunst-project/dunst). For further information, please refer to [this](https://wiki.archlinux.org/index.php/Desktop_notifications) Arch Wiki page.
@@ -44,3 +44,6 @@ cd Sarge
 cargo build --release
 ```
 The binary will be formed in `target/release/sarge`.
+
+## License
+Sarge is released under the [MIT](https://github.com/RedDocMD/Sarge/blob/master/LICENSE) license.
