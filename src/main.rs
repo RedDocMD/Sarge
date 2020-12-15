@@ -47,28 +47,25 @@ fn main() {
     let (config_raw, config_path) = get_config();
     let config_rc = Arc::from(Mutex::new(config_raw));
 
+    let (tx, rx) = channel();
+    let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(5)).unwrap();
     if let Some(config_path) = config_path {
-        let (tx, rx) = channel();
-        let mut watcher: RecommendedWatcher = Watcher::new(tx, Duration::from_secs(5)).unwrap();
         watcher
             .watch(config_path, RecursiveMode::Recursive)
             .unwrap();
 
         let config_rc = Arc::clone(&config_rc);
         thread::spawn(move || loop {
-            match rx.recv() {
-                Ok(event) => match event {
-                    DebouncedEvent::Write(path) => {
-                        if let Ok(conf) = &mut Config::from_file(&path) {
-                            let mut config = config_rc.lock().unwrap();
-                            println!("Got hands on config: {}", path.display());
-                            config.update(conf);
-                        }
+            let event = rx.recv().unwrap();
+            match event {
+                DebouncedEvent::Write(path) => {
+                    if let Ok(conf) = &mut Config::from_file(&path) {
+                        let mut config = config_rc.lock().unwrap();
+                        config.update(conf);
                     }
-                    _ => {}
-                },
-                Err(e) => println!("{}", e),
-            };
+                }
+                _ => {}
+            }
         });
     } else {
         warn!("no config file found; choosing to default config");
