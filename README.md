@@ -36,14 +36,27 @@ Sarge supports *hot-reloading* of the config file, which means that it watches f
 ## Requirements
 Sarge uses D-Bus notifications to send its notifications. Desktop environments typically have this out of the box. If you use a discrete window-manager, then you might need to install a notification serer. I personally use [Dunst](https://github.com/dunst-project/dunst). For further information, please refer to [this](https://wiki.archlinux.org/index.php/Desktop_notifications) Arch Wiki page.
 
-## Building
-You must have `cargo` installed.
+## Installation
+
+### Manual build and install
+You must have `cargo` installed. Suppose you are in `$HOME` when you perform the install.
 ```
 git clone https://github.com/RedDocMD/Sarge
 cd Sarge
 cargo build --release
 ```
 The binary will be formed in `target/release/sarge`.
+
+To automatically start this on login, make a file called `sarge.sh` in `/etc/profile.d` and make it executable. Add the line `$HOME/Sarge/target/release/sarge`, save and re-login.
+```
+cd /tmp
+touch sarge.sh
+echo "$HOME/Sarge/target/release/sarge" > sarge.sh
+sudo bash
+cp sarge.sh /etc/profile.d/
+chmod +x /etc/profle.d/sarge.sh
+exit
+```
 
 ## License
 Sarge is released under the [MIT](https://github.com/RedDocMD/Sarge/blob/master/LICENSE) license.
