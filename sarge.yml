@@ -1,0 +1,18 @@
+update_interval: 1000
+
+triggers:
+  - percentage: 100
+    when: Equal
+    message: Battery full
+
+  - percentage: 20
+    when: Below
+    message: Battery low - less than 20% remaining
+    
+  - percentage: ~
+    when: Charging
+    message: Battery charging
+
+  - percentage: ~
+    when: Discharging
+    message: Battery discharging
