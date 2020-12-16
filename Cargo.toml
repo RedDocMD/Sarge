@@ -1,6 +1,6 @@
 [package]
 name = "sarge"
-version = "0.1.0"
+version = "1.0.0"
 authors = ["Deep Majumder <deep.majumder2019@gmail.com>"]
 edition = "2018"
 
