@@ -33,13 +33,15 @@ The config file is to be written in YAML. The keys are as follows:
 
 Sarge supports *hot-reloading* of the config file, which means that it watches for changes in its config file.
 
-## Requirements
+## Dependencies 
 Sarge uses D-Bus notifications to send its notifications. Desktop environments typically have this out of the box. If you use a discrete window-manager, then you might need to install a notification serer. I personally use [Dunst](https://github.com/dunst-project/dunst). For further information, please refer to [this](https://wiki.archlinux.org/index.php/Desktop_notifications) Arch Wiki page.
+
+Also, to build and install (or to use the script for that), you must have `git` and `cargo` installed and in your `$PATH`. For installing `cargo`, please look at the Rust [install](https://www.rust-lang.org/tools/install) documentation.
 
 ## Installation
 
 ### Manual build and install
-You must have `cargo` installed. Suppose you are in `$HOME` when you perform the install.
+Suppose you are in `$HOME` when you perform the install.
 ```
 git clone https://github.com/RedDocMD/Sarge
 cd Sarge
@@ -51,7 +53,7 @@ To automatically start this on login, make a file called `sarge.sh` in `/etc/pro
 ```
 cd /tmp
 touch sarge.sh
-echo "$HOME/Sarge/target/release/sarge" > sarge.sh
+echo "$HOME/Sarge/target/release/sarge &" > sarge.sh
 sudo bash
 cp sarge.sh /etc/profile.d/
 chmod +x /etc/profle.d/sarge.sh
